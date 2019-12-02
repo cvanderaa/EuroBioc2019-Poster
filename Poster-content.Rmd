@@ -17,11 +17,11 @@ This document contains the content of the poster for the EuroBioc2019 conference
 
 For poster tips, check this [website](https://www.animateyour.science/post/how-to-design-an-award-winning-conference-poster).
 
-# scpdata: a data package for single-cell proteomics
-
 *Abstract*: Recent advances in sample preparation, processing and mass spectrometry (MS) have allowed the emergence of MS-based single-cell proteomics (SCP). However, bioinformatics tools to process and analyze these new types of data are still missing. In order to boost the development and the benchmarking of SCP methodologies, we are developing the scpdata experiment package. The package will distribute published and curated SCP data sets in standardized Bioconductor format. The poster will give an overview of the available data sets and show preliminary results regarding data exploration and processing.
 
 What follows is the content of the poster. 
+
+# **scpdata: a data package for single-cell proteomics**
 
 ```{r load, echo=FALSE, results='hide'}
 # Load required data
@@ -39,14 +39,16 @@ suppressWarnings(suppressMessages(source("~/tmp/scp/R/utils-0.0.1.R")))
 # This file can be found on Github "cvanderaa/scp/R/utils-0.0.1.R"
 ```
 
-# Introduction 
+# Summary 
 
-Recent advances in sample preparation, processing and mass spectrometry (MS) have allowed the emergence of MS-based single-cell proteomics (SCP). However, bioinformatics tools to process and analyze these new types of data are still missing. We are developing the scpdata experiment package containing published and curated SCP data sets in standardized Bioconductor format. We expect our package to galvanize the bioinformatics community to develop new tools to process and analyze SCP data.
+Recent advances in sample preparation, processing and mass spectrometry (MS) have allowed the emergence of MS-based single-cell proteomics (SCP). However, bioinformatics tools to process and analyze these new types of data are still missing. In order to boost the development and the benchmarking of SCP methodologies, we are developing the scpdata experiment package. The package will distribute published and curated SCP data sets in standardized Bioconductor format. 
 
-Two main trends for generating MS-SCP data:
+# Introduction
 
-* Label-free proteomics: the nanoPOTS technology developed by Zhu and colleagues (@Zhu2018-bf) analyzes one sample of interest per MS run. Although the throughput is low (~10 samples/day), it allows for an accurate peptide quantification. 
-* TMT-based proteomics: the SCoPE pipeline developed by the Slavov Lab (@Budnik2018-qh) combines different samples in a single MS run using tandem-mass tags (TMT) labeling. It increases the throughput and the identification rate, but reduces the quantification accuracy.
+There are two main types of MS-SCP data:
+
+* Label-free proteomics: the nanoPOTS technology developed by Zhu and colleagues (@Zhu2018-bf) analyzes one sample/cell per MS run. Although the throughput is low (~10 samples/day), it allows for an accurate peptide quantification. 
+* TMT-based proteomics: the SCoPE pipeline developed by the Slavov Lab (@Budnik2018-qh) combines different samples/cells in a single MS run using tandem-mass tags (TMT) labeling. It increases the throughput and the identification rate, but reduces the quantification accuracy.
 
 Data will be available for both techniques. This allows an informed choice for which statistical method to use for a given technique.
 
@@ -79,7 +81,7 @@ Every data set has a help file that describes the content of the data set, how i
 
 # Data manipulation
 
-Thanks to the Bioconductor class `MSnSet`, data sets can easily be processed and analyzed in a standard and systematic way. For instance, we re-implemented the R script provided in @Specht2019-jm as object oriented functions. The pipeline for processing peptide expression data becomes:
+Thanks to the Bioconductor class `MSnSet`, data sets can easily be processed and analyzed in a standard and systematic way. For example, we re-implemented the R script provided in @Specht2019-jm as object oriented functions. The pipeline for processing peptide expression data becomes:
 
 ```{r data_manip, eval=FALSE, cache=TRUE}
 data("specht2019_peptide")
@@ -94,7 +96,7 @@ specht2019_peptide %>%
 
 # Data QC
 
-While developing the SCoPE technology, the Slavov lab also suggested some QC measures and visuals (@Huffman2019-ns). The `scpdata` package provides an ideal working environment for developing and improving SCP data QC. For instance, the TMT channel intensity plot allows to quickly identify failed runs or failed sample preparations: 
+While developing the SCoPE technology, the Slavov lab also suggested some QC measures and visualizations (@Huffman2019-ns). The `scpdata` package provides an ideal working environment for developing and improving SCP data QC. For instance, the TMT channel intensity plot allows to quickly identify failed runs or failed sample preparations: 
 
 ```{r QC, echo=FALSE, cache=TRUE, fig.width=10}
 
@@ -133,44 +135,63 @@ pl <- ggplot(data = df, aes(x = channel, y = intensity)) +
                                sc_m0 = "#b3ba82", sc_u = "coral"), 
                     limits = c("carrier_mix", "unused", 
                                "norm", "sc_0", "sc_m0"),
-                    labels = c(carrier_mix = "carrier (100c)", norm = "reference (5c)",
+                    labels = c(carrier_mix = "carrier (100c)", 
+                               norm = "reference (5c)",
                                sc_0 = "empty", unused = "unused", 
                                sc_m0 = "macrophage (1c)")) +
   scale_x_discrete(limits = paste0("TMT", 1:11)) +
   scale_shape_manual(values = "+",
                      labels = c(`+` = "Median"),
                      name = "")
-
-
 pl
 .tmp <- graph2svg(x = pl, file = "./figs/QC.svg", aspectr = 2)
 
 ```
-**Figure 1: MS intensity distributions per channel at the peptide level.** Contamination peptides or peptides with a low identification score were removed. Run `190222S_LCA9_X_FP94BF` from @Specht2019-jm. `n` stands for the number of non-missing peptides.
+
+**Figure 1: MS intensity distributions per channel at the peptide level.** Contamination peptides or peptides with a low identification score were removed. Data taken from run `190222S_LCA9_X_FP94BF` published in @Specht2019-jm. `n` stands for the number of non-missing peptides.
+
 
 # Data validation
 
-```{r PCA, echo=FALSE, cache=TRUE}
+There are 2 mindsets for data validation:
+- Generate in vitro/silico simulated data sets: ground truth is known but could deviate from reality
+- Generate data from biological samples with some prior knowledge (manual sampling, FACS staining, experimental design,...): close to a real experiment but no ground truth available
+
+Dimension reduction and data visualization (PCA, tSNE, UMAP) is often used for validating data (Figure 2). When ground truth is available, we can use benchmarking metrics: silhouette width, entropy of cluster accuracy, kBET for batch correction.
+
+
+```{r PCA, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 scpd <- specht2019_peptide
 pca <- nipals(exprs(scpd), ncomp = 3, center = TRUE, scale = TRUE)
-pl <- customPCA(scpd, pca, x = "PC1", y = "PC3", color = "celltype", 
+pl1 <- customPCA(scpd, pca, x = "PC2", y = "PC1", color = "celltype", 
+          shape = "batch_chromatography") + 
+  theme(legend.position = "none")
+pl2 <- customPCA(scpd, pca, x = "PC3", y = "PC1", color = "celltype", 
           shape = "batch_chromatography") + 
   scale_color_manual(name = "Cell type", 
-                     values = c(sc_m0 = "cornflowerblue",
+                     values = c(sc_m0 = "skyblue3",
                                 sc_u = "coral"),
                      labels = c(sc_m0 = "macrophages",
                                 sc_u = "monocytes")) + 
   scale_shape(name = "Batch")
-pl
-.tmp <- graph2svg(x = pl, file = "./figs/PCA.svg", aspectr = 2)
+# Save plot
+suppressMessages(
+  graph2svg(x = grid.arrange(pl1, pl2, ncol = 2, widths=c(3, 4)), 
+            file = "./figs/PCA.svg", aspectr = 2)
+)
 ```
- **Figure 2: PCA plot of peptide expression data**. Macrophages and monocytes are well separated in the third principal component. However, the first and second, not shown, component are driven by batch effects. LCA10 and LCA9 are two chromatographic batches. The PCA was performed using the non-linear iterative partial least squares (NIPALS) algorithm to account for missing data.
+ 
+ **Figure 2: PCA plot of peptide expression data**. Macrophages and monocytes are well separated in the third principal component. However, the first and second components are driven by batch effects. Monocytes are untreated U-937 cells, macrophages are U-937 treated with PMA for 24 hours. LCA10 and LCA9 are two chromatographic batches. The PCA was performed using the non-linear iterative partial least squares (NIPALS) algorithm that is robust against missing data.
  
 # Problems to tackle
 
+## Batch effects
+
+Batch effects are inherent to MS-SCP data since many samples/cells cannot be analyzed in one go (even with TMT labeling). Different samples have to be distributed across different MS runs and this leads to tremendous batch effects (Figure 2). These batch effects should be corrected before performing downstream analysis to avoid biased conclusions.
+
 ## Missingness
 
-
+The @Specht2019-jm data sets contains +/- 75 \% missing data. This needs to be accounted for in statistical software. Furthermore, conditions can be differentially affected by missingness that could lead to imputation induced differential expression (Figure 3).
 
 ```{r missingness, echo=FALSE, fig.asp = 1}
 sc <- specht2019_peptide
@@ -187,12 +208,14 @@ df$relFC <- df$logFc_sc_m0 - df$logFc_sc_u
 df$relFC[df$relFC > 2] <- 2
 df$relFC[df$relFC < -2] <- -2
 # Scatter plot
-sp <- ggplot(data = df, aes(x = mis_sc_m0, y = mis_sc_u, col = relFC), size = 0.8) +
+sp <- ggplot(data = df, aes(x = mis_sc_m0, y = mis_sc_u, col = relFC), 
+             size = 0.8) +
   geom_point() + 
   scale_color_gradient2(name = "log2(rFC)", low = "darkgreen", breaks = -2:2, 
                         labels = c("Monocyte", -1:1, "Macrophage"),
                         high = "red3", midpoint = 0, mid = "wheat") +
   theme(legend.position = c(1, 0), legend.justification = c("right", "bottom"),
+        plot.margin = unit(c(0, 0, 0, 0), "cm"),
         legend.background = element_rect(fill="transparent", 
                                          size=0.5, linetype="solid")) +
   ylab("Missingness (%) in monocytes") + xlab("Missingness (%) in macrophages")
@@ -200,38 +223,36 @@ sp <- ggplot(data = df, aes(x = mis_sc_m0, y = mis_sc_u, col = relFC), size = 0.
 dp1 <- ggplot(data = df, aes(mis_sc_m0)) + 
   geom_density(fill = "grey") +
   theme(axis.text = element_blank(), axis.title = element_blank(),
-        axis.ticks = element_blank(), plot.margin = margin(2, 4, 2, 2),
+        axis.ticks = element_blank(),
+        plot.margin = unit(c(0, 0, 0, 1), "cm"),
         panel.background = element_blank())
 # monocyte density plot
 dp2 <- ggplot(data = df, aes(mis_sc_u)) + 
   geom_density(fill = "grey") +
   coord_flip() +
   theme(axis.text = element_blank(), axis.title = element_blank(),
-        axis.ticks = element_blank(), plot.margin = margin(2, 4, 2, 2),
+        axis.ticks = element_blank(),
+        plot.margin = unit(c(0, 0, 1, 0), "cm"),
         panel.background = element_blank())
 # Empty plot
 blank <- ggplot() + geom_blank() + theme(panel.background = element_blank())
-# Align plots
-palign1 <- align_plots(sp, dp1, align = "v")
-palign2 <- align_plots(sp, dp2, align = "h")
-# Combine plots 
-pl <- grid.arrange(palign1[[2]], blank, palign1[[1]] , palign2[[2]], 
-                   ncol=2, nrow=2, widths=c(10, 1), heights=c(1, 10))
-.tmp <- graph2svg(x = pl, file = "./figs/missing.svg", aspectr = 1)
+# Combine and save plots
+pl <- plot_grid(dp1, blank, sp, dp2, align = "none",
+                rel_widths=c(10, 1), rel_heights=c(1, 10))
+plot(pl)
+suppressMessages(graph2svg(x = pl, file = "./figs/missing.svg", aspectr = 1))
 ```
 
-## Batch effects
-
-Batch effects are inherent to MS-SCP data since many samples/cells cannot be analyzed in one go (even with TMT labeling). Different samples have to be distributed across different MS runs and this leads to tremendous batch effects (Figure 2). These batch effects should be corrected before performing downstream analysis to avoid biased conclusions.
+**Figure 3: missingness in macrophages and monocytes**. Distribution of the proportion missing data in monocytes against macrophages. Color indicates the log2 fold change of macrophages (red) over monocytes (green). 
 
 ## Curse of dimensionality
 
-The current experiments are producing relatively small data sets (thousands of peptides x hundreds of cells) compared to single-cell transcriptomics. Nevertheless, the rapid growing of MS-SCP 
+The current experiments are producing relatively small data sets (thousands of peptides x hundreds of cells) compared to single-cell transcriptomics. Nevertheless, the rapid growing of MS-SCP techniques will lead to data sets of much higher dimensionality. This is a challenge for both the statistical analyses and software optimization. 
 
 
 # Conclusion
 
-MS-based SCP is still at its infancy. However, we hope that developing an MS-SCP data package will provide a strong framework for bioinformatics research. It will support the development of new packages for tackling the missing data and batch effect issues seen in MS-SCP data, as well as providing a growing data repository for software benchmarking. By thorough implementation and benchmarking of its software, MS-SCP might become a new state-of-the-art technique for single-cell omcis.
+MS-based SCP is still at its infancy. However, we hope that developing an MS-SCP data package will provide a strong framework for bioinformatics research. It will support the development of new packages for tackling the statistical issues (missing data, batch effect, high dimensionality) seen in MS-SCP data, as well as providing a growing data repository for software benchmarking. By thorough implementation and benchmarking of its software, MS-SCP might become a new state-of-the-art technique for single-cell omcis.
 
 # Acknowledgements
 
