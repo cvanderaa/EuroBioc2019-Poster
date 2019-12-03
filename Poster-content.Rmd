@@ -41,14 +41,19 @@ suppressWarnings(suppressMessages(source("~/tmp/scp/R/utils-0.0.1.R")))
 
 # Summary 
 
-Recent advances in sample preparation, processing and mass spectrometry (MS) have allowed the emergence of MS-based single-cell proteomics (SCP). However, bioinformatics tools to process and analyze these new types of data are still missing. In order to boost the development and the benchmarking of SCP methodologies, we are developing the scpdata experiment package. The package will distribute published and curated SCP data sets in standardized Bioconductor format. 
+Recent advances in sample preparation, processing and mass spectrometry (MS) have allowed the emergence of MS-based single-cell proteomics (SCP). However, bioinformatics tools to process and analyze these new types of data are still missing. In order to boost the development and the benchmarking of SCP methodologies, we are developing the `scpdata` experiment package. The package will distribute published and curated SCP data sets in standardized `Bioconductor` format. 
 
 # Introduction
 
 There are two main types of MS-SCP data:
 
 * Label-free proteomics: the nanoPOTS technology developed by Zhu and colleagues (@Zhu2018-bf) analyzes one sample/cell per MS run. Although the throughput is low (~10 samples/day), it allows for an accurate peptide quantification. 
+
+![](figs/nanoPOTS.png)
+
 * TMT-based proteomics: the SCoPE pipeline developed by the Slavov Lab (@Budnik2018-qh) combines different samples/cells in a single MS run using tandem-mass tags (TMT) labeling. It increases the throughput and the identification rate, but reduces the quantification accuracy.
+
+![](figs/scopems.png)
 
 Data will be available for both techniques. This allows an informed choice for which statistical method to use for a given technique.
 
@@ -94,9 +99,9 @@ specht2019_peptide %>%
   batchCorrect(batch = "raw.file", target = "celltype") -> scpd
 ```
 
-# Data QC
+# Data quality control
 
-While developing the SCoPE technology, the Slavov lab also suggested some QC measures and visualizations (@Huffman2019-ns). The `scpdata` package provides an ideal working environment for developing and improving SCP data QC. For instance, the TMT channel intensity plot allows to quickly identify failed runs or failed sample preparations: 
+While developing the SCoPE technology, the Slavov lab also suggested some quality control (QC) measures and visualizations (@Huffman2019-ns). The `scpdata` package provides an ideal working environment for developing and improving SCP data QC. For instance, the TMT channel intensity plot allows to quickly identify failed runs or failed sample preparations: 
 
 ```{r QC, echo=FALSE, cache=TRUE, fig.width=10}
 
@@ -144,7 +149,7 @@ pl <- ggplot(data = df, aes(x = channel, y = intensity)) +
                      labels = c(`+` = "Median"),
                      name = "")
 pl
-.tmp <- graph2svg(x = pl, file = "./figs/QC.svg", aspectr = 2)
+.tmp <- graph2png(x = pl, file = "./figs/QC.png", aspectr = 2)
 
 ```
 
@@ -154,10 +159,11 @@ pl
 # Data validation
 
 There are 2 mindsets for data validation:
+
 - Generate in vitro/silico simulated data sets: ground truth is known but could deviate from reality
 - Generate data from biological samples with some prior knowledge (manual sampling, FACS staining, experimental design,...): close to a real experiment but no ground truth available
 
-Dimension reduction and data visualization (PCA, tSNE, UMAP) is often used for validating data (Figure 2). When ground truth is available, we can use benchmarking metrics: silhouette width, entropy of cluster accuracy, kBET for batch correction.
+Dimension reduction and data visualization (PCA, tSNE, UMAP) is often used for validating data (Figure 2). When ground truth is available, we can further use benchmarking metrics: silhouette width, entropy of cluster accuracy, kBET for batch correction. 
 
 
 ```{r PCA, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.width=10}
@@ -176,8 +182,8 @@ pl2 <- customPCA(scpd, pca, x = "PC3", y = "PC1", color = "celltype",
   scale_shape(name = "Batch")
 # Save plot
 suppressMessages(
-  graph2svg(x = grid.arrange(pl1, pl2, ncol = 2, widths=c(3, 4)), 
-            file = "./figs/PCA.svg", aspectr = 2)
+  graph2png(x = plot(grid.arrange(pl1, pl2, ncol = 2, widths=c(3, 4))), 
+            file = "./figs/PCA.png", aspectr = 2)
 )
 ```
  
@@ -191,7 +197,7 @@ Batch effects are inherent to MS-SCP data since many samples/cells cannot be ana
 
 ## Missingness
 
-The @Specht2019-jm data sets contains +/- 75 \% missing data. This needs to be accounted for in statistical software. Furthermore, conditions can be differentially affected by missingness that could lead to imputation induced differential expression (Figure 3).
+The @Specht2019-jm data sets contains +/- 75 \% missing data. This needs to be accounted for by the statistical methods used for downstream analyses. Furthermore, conditions can be differentially affected by missingness that could lead to imputation-induced differential expression (Figure 3).
 
 ```{r missingness, echo=FALSE, fig.asp = 1}
 sc <- specht2019_peptide
@@ -240,14 +246,14 @@ blank <- ggplot() + geom_blank() + theme(panel.background = element_blank())
 pl <- plot_grid(dp1, blank, sp, dp2, align = "none",
                 rel_widths=c(10, 1), rel_heights=c(1, 10))
 plot(pl)
-suppressMessages(graph2svg(x = pl, file = "./figs/missing.svg", aspectr = 1))
+suppressMessages(graph2png(x = pl, file = "./figs/missing.png", aspectr = 1))
 ```
 
 **Figure 3: missingness in macrophages and monocytes**. Distribution of the proportion missing data in monocytes against macrophages. Color indicates the log2 fold change of macrophages (red) over monocytes (green). 
 
 ## Curse of dimensionality
 
-The current experiments are producing relatively small data sets (thousands of peptides x hundreds of cells) compared to single-cell transcriptomics. Nevertheless, the rapid growing of MS-SCP techniques will lead to data sets of much higher dimensionality. This is a challenge for both the statistical analyses and software optimization. 
+The current experiments are producing relatively small data sets (thousands of peptides x hundreds of cells) compared to single-cell transcriptomics. Nevertheless, the rapid growing of MS-SCP techniques will lead to data sets of much higher dimensionality. This is a challenge for both the statistical analyses and the software optimization. Possible solution should be inspired from current achievement in single cell transcriptomics. 
 
 
 # Conclusion
