@@ -28,6 +28,7 @@ library(export)
 library(ggplot2)
 library(kableExtra)
 library(knitr)
+library(grid)
 library(gridExtra)
 library(magrittr)
 library(MSnbase)
@@ -127,13 +128,11 @@ df$relFC[df$relFC < -2] <- -2
 # Scatter plot
 sp <- ggplot(data = df, aes(x = mis_sc_m0, y = mis_sc_u, col = relFC)) +
   geom_point(size = 0.5) + 
-  scale_color_gradient2(name = "log2(rFC)", low = "darkgreen", breaks = -2:2, 
-                        labels = c("monocyte", -1:1, "macrophage"),
+  scale_color_gradient2(name = "log2(rFC)", low = "darkgreen", breaks = c(-2,2), 
+                        labels = c("monocyte", "macrophage"),
                         high = "red3", midpoint = 0, mid = "wheat") +
-  theme(legend.position = c(0.5, 0.5), legend.justification = "center",
-        plot.margin = unit(c(0, 0, 0, 0), "cm"),
-        legend.background = element_rect(fill="transparent", 
-                                         size=0.5, linetype="solid")) +
+  theme(legend.direction = "horizontal",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        legend.background = element_blank()) +
   ylab("Missingness (%) in monocytes") + xlab("Missingness (%) in macrophages")
 # Macrophage density plot
 dp1 <- ggplot(data = df, aes(mis_sc_m0)) + 
@@ -156,12 +155,12 @@ sp <- sp + theme(legend.position = "none")
 # Empty plot
 blank <- ggplot() + geom_blank() + theme(panel.background = element_blank())
 # Combine and save plots
-pl.mis <- plot_grid(dp1, blank, blank, sp, dp2, leg, align = "none",
-                    ncol = 3, nrow = 2,
-                    rel_widths=c(10, 1, 4), rel_heights=c(1, 10))
+pl.mis <- plot_grid(dp1, blank, sp, dp2, align = "none",
+                    ncol = 2, nrow = 2,
+                    rel_widths=c(10, 1), rel_heights=c(1, 10))
 graph2png(x = pl.mis, file = "./figs/missing.png", aspectr = 1,
-          width = 4.77, height = 3.5)
-
-
+          width = 4, height = 4)
+graph2png(x = grid.draw(leg), file = "./figs/missing-leg.png", 
+          width = 4, height = 1)
 
 
