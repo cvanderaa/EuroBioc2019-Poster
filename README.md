@@ -6,7 +6,7 @@ The poster for the EuroBioc2019 conference about the 'scpdata' package. The post
 
 In order to reproduce the poster you will need:
 
-* A working `R` installation with the required packages also installed. The required packages are listed at the begining of the R script `/R/utils-1.0.0.R`. Note that the package `scpdata` might not (yet) be available on CRAN or Bioconductor. The easiest way is to install it using `devtools::install_github("cvanderaa/scpdata")`.
+* A working `R` installation with the required packages also installed. The required packages are listed at the begining of the R script `/R/utils-1.0.0.R`. Note that the package `scpdata` might not (yet) be available on Bioconductor. The easiest way is to install it using `devtools::install_github("cvanderaa/scpdata")`.
 * A working `TeX` distribution
 
 ## Compiling poster
